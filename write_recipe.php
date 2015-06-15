@@ -75,9 +75,9 @@ function addContents($json, $manifest){
 	    }
 	}
 
-	$foo=array_values($json['recipe']['pages']);
-	usort($foo, "pagecmp");
-	$json['recipe']['pages'] = $foo; 
+	$temp_json=array_values($json['recipe']['pages']);
+	usort($temp_json, "pagecmp");
+	$json['recipe']['pages'] = $temp_json; 
 
 	if (!feof($handle)) {
 	    echo "Error: unexpected fgets() fail\n";
