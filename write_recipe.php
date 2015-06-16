@@ -43,13 +43,15 @@ function makeRecipeJson( $urlBase, $bagCode, $bagName, $itemLabel)
 
 }
 
-
+# We'll sort pages based on filename scanned pages will be named to
+#  sort in corect order
 function pagecmp($a,$b){
     return strcmp($a["file"], $b["file"]);
 }
 
 
-function addContents($json, $manifest){
+
+function addPages$json, $manifest){
     global $urlBase;
     try{
 	$handle = @fopen($manifest, "r");
@@ -87,24 +89,24 @@ function addContents($json, $manifest){
     catch(Exception $e){
 	echo "Something is wrong here";
     }
-    //print_r(json_encode($json));
+
     return json_encode($json, JSON_PRETTY_PRINT);
 }
 
 try {
     
     $json =makeRecipeJson( $urlBase, $bagCode, $bagName, $itemLabel);
-    $json = addContents($json, $bagManifest);
+    $json = addPages$json, $bagManifest);
     $file = fopen( $bagName . ".json", "w");
     fwrite($file, $json);
 
 
 } catch (UnsatisfiedDependencyException $e) {
-
+    
     // Some dependency was not met. Either the method cannot be called on a
     // 32-bit system, or it can, but it relies on Moontoast\Math to be present.
     echo 'Caught exception: ' .  "\n";
-
-  }
+    
+}
 
 

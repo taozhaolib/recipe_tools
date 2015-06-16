@@ -1,8 +1,8 @@
 #!/usr/bin/env php
 <?php
 require 'vendor/autoload.php';
-use GuzzleHttp\Client;
 
+use GuzzleHttp\Client;
 
 if(! $itemfile =@ $argv[1] ) {
     exit("No item csv file specified.\n");
@@ -12,10 +12,11 @@ if(! $csvfh = @fopen( $itemfile, "r" ) ) {
 }
 
 
-# set up Guzzle client to make requests for marcxml 
+# Set up Guzzle client to make requests for marcxml 
 $client = new Client(['base_uri' => 'http://52.0.88.11']); 
 
 
+# Get marcxml for all of the mssids in our list
 $first=TRUE;
 while($line = fgetcsv($csvfh ) ){
 
