@@ -6,3 +6,5 @@ Requires:
 
 * [ramsey/uuid](https://github.com/ramsey/uuid)
 * [GuzzleHttp](http://guzzle.readthedocs.org/)
+
+Use composer to get them. 
