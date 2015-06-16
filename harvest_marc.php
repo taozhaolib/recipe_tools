@@ -36,6 +36,4 @@ while($line = fgetcsv($csvfh ) ){
 	fwrite( $outfh, $response->getBody());
 	fclose( $outfh );
     }
-
-    
 }
