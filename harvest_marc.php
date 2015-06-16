@@ -39,12 +39,3 @@ while($line = fgetcsv($csvfh ) ){
 
     
 }
-
-
-
-
-
-
-
-
-		     
