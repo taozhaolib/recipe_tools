@@ -29,7 +29,7 @@ while($line = fgetcsv($csvfh ) ){
     # get marcxml for a book
     $mssid= $line[1];
     $bagname = $line[2];
-    fwrite(STDOUT, "processing mssid ".$mssid. " for bag ".$bagname."\n" );
+    fwrite(STDOUT, "downloading marcxml record mssid ".$mssid. " for bag ".$bagname."\n" );
     $response =$client->get('.', ['query' => ['bib_id' => $mssid]]);
 
     # save it to a file based on the bag name
