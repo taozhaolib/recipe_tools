@@ -5,10 +5,10 @@ use GuzzleHttp\Client;
 
 
 if(! $itemfile =@ $argv[1] ) {
-    exit("no item csv file specified\n");
+    exit("No item csv file specified.\n");
 }
-if(! $csvfh = @fopen( "items.csv", "r" ) ) {
-    exit("Couldn't open file\n");
+if(! $csvfh = @fopen( $itemfile, "r" ) ) {
+    exit("Couldn't open file: $php_errormsg\n");
 }
 
 
