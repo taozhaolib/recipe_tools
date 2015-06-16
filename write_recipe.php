@@ -51,7 +51,7 @@ function pagecmp($a,$b){
 
 
 
-function addPages$json, $manifest){
+function addPages($json, $manifest){
     global $urlBase;
     try{
 	$handle = @fopen($manifest, "r");
