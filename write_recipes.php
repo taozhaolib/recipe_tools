@@ -122,8 +122,10 @@ if(! is_dir($outpath)) {
 
 
 // Set up Guzzle client to make requests for marcxml 
-$client = new Client(['base_uri' => 'https://bagit.lib.ou.edu/UL-BAGIT/',
-		      'auth' => $FA_account]);  
+$bagClient = new Client(['base_uri' => 'https://bagit.lib.ou.edu/UL-BAGIT/',
+		      'auth' => $FA_account]);
+
+$marcClient = new Client(['base_uri' => 'http://52.0.88.11']); 
 
 
 $count=0;
@@ -165,7 +167,7 @@ while($line = fgetcsv($csvfh ) ){
 
 
     try {
-	$response = $client->get("./$bagName/manifest-md5.txt");
+	$response = $bagClient->get("./$bagName/manifest-md5.txt");
 
 	$manifest = $response->getBody();
 	$manifestString = $manifest->getContents();
@@ -174,14 +176,37 @@ while($line = fgetcsv($csvfh ) ){
 	$json = addPagesFromString($json, $manifestString, $bagName);
 	$file = fopen( $outpath."/".$bagName . ".json", "w");
 
-	fwrite($file, $json);
+	fwrite( $file, $json);
+	fclose( $file );
 
     } catch (ClientException $e) {
 	$badcode = $e->getResponse()->getStatusCode();
 	$baduri = $e->getRequest()->getUri();
 
-        print "ERROR Importing: $bagName";
+        print "ERROR getting MANIFEST for $bagName. ";
 	print "Status: $badcode ";
 	print "URI: $baduri \n";
     }
+
+    try {
+
+	$response = $marcClient->get(".", ['query' => ['bib_id' => $mssid]]);
+
+	// save it to a file based on the bag name
+
+	$outfh = fopen( $outpath."/".$bagName.".xml", "w" );
+	fwrite( $outfh, $response->getBody());
+	fclose( $outfh );
+
+	
+    } catch (ClientException $e) {
+	$badcode = $e->getResponse()->getStatusCode();
+	$baduri = $e->getRequest()->getUri();
+
+        print "ERROR getting MARC for $bagName.";
+	print "Status: $badcode ";
+	print "URI: $baduri \n";
+    }
+
+    
 }
