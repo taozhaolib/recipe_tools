@@ -109,23 +109,43 @@ if(! $csvfh = @fopen( $itemfile, "r" ) ) {
 $client = new Client(['base_uri' => 'https://bagit.lib.ou.edu/UL-BAGIT/',
 		      'auth' => $FA_account]);  
 
-// https://bagit.lib.ou.edu/UL-BAGIT/Aldrovandi_1640/manifest-md5.txt
 
-
-
-$first=TRUE;
-
+$count=0;
 while($line = fgetcsv($csvfh ) ){
-
+    $count++;
+    
     // skip first line, it's a header
-    if($first== TRUE) {
-	$first=FALSE;
+    if($count < 2 ) {
 	continue;
     }
 
-    $label = $line[0];   // human readable name
-    $mssid= $line[1];    // alma manuscript id
-    $bagName = $line[2]; // bagName from digilab
+
+    
+    $csv_err="";
+    if(""!=$line[0]) {
+	$label = $line[0];// human readable name
+    }  else {
+	$csv_err .= ", missing label";
+    }
+
+    if(""!=$line[1]) {
+	$mssid = $line[1]; // alma manuscript id
+    }    
+    else {
+	$csv_err .= ", missing mssid ";
+    }
+    if(""!=$line[2]) {
+	$bagName = $line[2]; // bagName from digilab
+    } 
+    else {
+	$csv_err .=  ", missing bag name" ;
+    }
+
+    if ("" !=$csv_err) {
+	print "ERROR line ".$count.$csv_err ."\n";
+	continue;
+    }
+
 
 
     try {
@@ -142,7 +162,8 @@ while($line = fgetcsv($csvfh ) ){
     } catch (ClientException $e) {
 	$badcode = $e->getResponse()->getStatusCode();
 	$baduri = $e->getRequest()->getUri();
-	print "Status: $badcode \n";
-	print "Resource: $baduri \n\n";
+        print "ERROR Importing: $bagName";
+	print "Status: $badcode ";
+	print "URI: $baduri \n";
     }
 }
