@@ -22,8 +22,9 @@ use GuzzleHttp\Exception\ClientException;
 // generating them purely for documentation
 $repoUuid = Uuid::uuid5(Uuid::NAMESPACE_DNS, 'repository.ou.edu');
 $repoSha =sha1($repoUuid);
-assert("eb0ecf41-a457-5220-893a-08b7604b7110"==$repoUuid);
-assert("13b91b58b959dfce278897abd672ff96b99229df" == $repoSha);
+assert(strcmp("eb0ecf41-a457-5220-893a-08b7604b7110",$repoUuid)==0);
+assert(strcmp("1639fb25f09f85a3b035bd7a0a62b2a9c7e00c18",$repoSha)==0);
+
 
 
     
