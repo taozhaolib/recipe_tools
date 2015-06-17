@@ -1,8 +1,7 @@
 #!/usr/bin/env php
 <?php 
 require 'vendor/autoload.php';
-
-require('credentials.php');
+require 'credentials.php'; // password file
 
 
 
@@ -19,8 +18,12 @@ use GuzzleHttp\Exception\ClientException;
 
 
 
+// these should be constant
+// generating them purely for documentation
 $repoUuid = Uuid::uuid5(Uuid::NAMESPACE_DNS, 'repository.ou.edu');
 $repoSha =sha1($repoUuid);
+assert("eb0ecf41-a457-5220-893a-08b7604b7110"==$repoUuid);
+assert("13b91b58b959dfce278897abd672ff96b99229df" == $repoSha);
 
 
     
@@ -79,6 +82,8 @@ function addPagesFromString($json, $manifest, $bagName) {
 	    
 	    $json['recipe']['pages'][$index]['label'] = substr($fileName, 0, -4);
 	    $json['recipe']['pages'][$index]['file'] = $fileName;
+	    // currently lying about what hashes we're using
+	    // $json['recipe']['pages'][$index]['md5'] = trim($fileInfoArr[0]);
 	    $json['recipe']['pages'][$index]['sha1'] = trim($fileInfoArr[0]);
 	    $json['recipe']['pages'][$index]['uuid'] = Uuid::uuid5($repoUuid, $bagName."/".$fileName)->toString();
 	    $json['recipe']['pages'][$index]['exif'] = $fileName.".exif.txt";
@@ -100,9 +105,19 @@ function addPagesFromString($json, $manifest, $bagName) {
 if(! $itemfile =@ $argv[1] ) {
     exit("No item csv file specified.\n");
 }
+
+if(! $outpath =@ $argv[2] ) {
+    exit("No output path specified.\n");
+}
+
 if(! $csvfh = @fopen( $itemfile, "r" ) ) {
     exit("Couldn't open file: $php_errormsg\n");
 }
+
+if(! is_dir($outpath)) {
+    exit("output path isn't a directory\n");
+}
+
 
 
 // Set up Guzzle client to make requests for marcxml 
@@ -149,19 +164,21 @@ while($line = fgetcsv($csvfh ) ){
 
 
     try {
-	
 	$response = $client->get("./$bagName/manifest-md5.txt");
 
 	$manifest = $response->getBody();
 	$manifestString = $manifest->getContents();
+
 	$json =makeRecipeJson( $bagName, $label);
 	$json = addPagesFromString($json, $manifestString, $bagName);
-	$file = fopen( $bagName . ".json", "w");
+	$file = fopen( $outpath."/".$bagName . ".json", "w");
+
 	fwrite($file, $json);
 
     } catch (ClientException $e) {
 	$badcode = $e->getResponse()->getStatusCode();
 	$baduri = $e->getRequest()->getUri();
+
         print "ERROR Importing: $bagName";
 	print "Status: $badcode ";
 	print "URI: $baduri \n";
