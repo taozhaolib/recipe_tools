@@ -2,33 +2,41 @@
 <?php 
 require 'vendor/autoload.php';
 
+require('credentials.php');
 
-/* use Ramsey\Uuid\Uuid; */
-/* use Ramsey\Uuid\Exception\UnsatisfiedDependencyException; */
 
+
+//   Cant use new namespace yet, but the namespace change will happen
+//   soon, so leaving declarations in place 
+// use Ramsey\Uuid\Uuid; 
+// use Ramsey\Uuid\Exception\UnsatisfiedDependencyException;
 
 use Rhumsaa\Uuid\Uuid;
 use Rhumsaa\Uuid\Exception\UnsatisfiedDependencyException;
-
-$fileArchive = "https://bagit.webdev.lib.ou.edu/";
-$bagName = "Ailly_1506";
-$bagCode = "73a65d2e407f49647ab893fa4080175a";
-$itemLabel = "Tractatus de anima";
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ClientException;
 
 
-$bagManifest ="manifest-md5.txt";
-$urlBase = $fileArchive ."/" .$bagName;
+
+$repoUuid = Uuid::uuid5(Uuid::NAMESPACE_DNS, 'repository.ou.edu');
+$repoSha =sha1($repoUuid);
 
 
     
-function makeRecipeJson( $urlBase, $bagCode, $bagName, $itemLabel)
+function makeRecipeJson(  $bagName, $itemLabel)
 {
+
+    global $repoUuid;
+    global $repoSha;
+
+    
     try{
 	$json = Array();
 	$json['recipe'] = Array();
 	$json['recipe']['import'] = 'book';
 	$json['recipe']['update'] = 'false';
-	$json['recipe']['uuid'] = Uuid::uuid5($bagCode, $urlBase)->toString();
+	$json['recipe']['uuid'] = Uuid::uuid5($repoUuid, $bagName)->toString();
 	$json['recipe']['label'] = $itemLabel;
 	  
 	$json['recipe']['metadata'] = Array();
@@ -43,70 +51,98 @@ function makeRecipeJson( $urlBase, $bagCode, $bagName, $itemLabel)
 
 }
 
-# We'll sort pages based on filename scanned pages will be named to
-#  sort in corect order
+// We'll sort pages based on filename scanned pages will be named to
+//  sort in corect order
 function pagecmp($a,$b){
     return strcmp($a["file"], $b["file"]);
 }
 
 
 
-function addPages($json, $manifest){
-    global $urlBase;
-    try{
-	$handle = @fopen($manifest, "r");
-	if($handle){
-	    $index = 0;
-	    while (($buffer = fgets($handle, 4096)) !== false) {
-		$fileInfo = trim($buffer);
-		//echo "file name = $fileInfo\n";
-		if($fileInfo != "" && strpos($fileInfo, ".tif") > 0){
-					
-		    $fileInfoArr = explode(" ", $fileInfo);
-		    $length = count($fileInfoArr);
-		    $fileName = trim(explode("/", trim($fileInfoArr[$length-1]))[1]);
+// given a json item record and a sting representation of a manifest
+// iterates through the manifest and adds page records 
+function addPagesFromString($json, $manifest, $bagName) {
+    global $repoUuid;
+    
+    $lines = explode(PHP_EOL, $manifest);
 
-		    $json['recipe']['pages'][$index]['label'] = substr($fileName, 0, -4);
-		    $json['recipe']['pages'][$index]['file'] = $fileName;
-		    $json['recipe']['pages'][$index]['sha1'] = trim($fileInfoArr[0]);
-		    $json['recipe']['pages'][$index]['uuid'] = Uuid::uuid5(trim($fileInfoArr[0]), $urlBase."/".$fileName)->toString();
-		    $json['recipe']['pages'][$index]['exif'] = $fileName.".exif.txt";
+    // build json array
+    $index=0;
+    foreach($lines as $fileInfo) {
 
-		    $index++;
-		}
-	    }
+
+	if($fileInfo != "" && strpos($fileInfo, ".tif") > 0){
+	    
+	    $fileInfoArr = explode(" ", $fileInfo);
+	    $length = count($fileInfoArr);
+	    $fileName = trim(explode("/", trim($fileInfoArr[$length-1]))[1]);
+	    
+	    $json['recipe']['pages'][$index]['label'] = substr($fileName, 0, -4);
+	    $json['recipe']['pages'][$index]['file'] = $fileName;
+	    $json['recipe']['pages'][$index]['sha1'] = trim($fileInfoArr[0]);
+	    $json['recipe']['pages'][$index]['uuid'] = Uuid::uuid5($repoUuid, $bagName."/".$fileName)->toString();
+	    $json['recipe']['pages'][$index]['exif'] = $fileName.".exif.txt";
+	    
+	    $index++;
+	    
 	}
-
-	$temp_json=array_values($json['recipe']['pages']);
-	usort($temp_json, "pagecmp");
-	$json['recipe']['pages'] = $temp_json; 
-
-	if (!feof($handle)) {
-	    echo "Error: unexpected fgets() fail\n";
-	}
-	fclose($handle);
     }
-    catch(Exception $e){
-	echo "Something is wrong here";
-    }
+
+    $temp_json=array_values($json['recipe']['pages']);
+    usort($temp_json, "pagecmp");
+    $json['recipe']['pages'] = $temp_json; 
 
     return json_encode($json, JSON_PRETTY_PRINT);
 }
 
-try {
-    
-    $json =makeRecipeJson( $urlBase, $bagCode, $bagName, $itemLabel);
-    $json = addPages$json, $bagManifest);
-    $file = fopen( $bagName . ".json", "w");
-    fwrite($file, $json);
 
 
-} catch (UnsatisfiedDependencyException $e) {
-    
-    // Some dependency was not met. Either the method cannot be called on a
-    // 32-bit system, or it can, but it relies on Moontoast\Math to be present.
-    echo 'Caught exception: ' .  "\n";
-    
+if(! $itemfile =@ $argv[1] ) {
+    exit("No item csv file specified.\n");
+}
+if(! $csvfh = @fopen( $itemfile, "r" ) ) {
+    exit("Couldn't open file: $php_errormsg\n");
 }
 
 
+// Set up Guzzle client to make requests for marcxml 
+$client = new Client(['base_uri' => 'https://bagit.lib.ou.edu/UL-BAGIT/',
+		      'auth' => $FA_account]);  
+
+// https://bagit.lib.ou.edu/UL-BAGIT/Aldrovandi_1640/manifest-md5.txt
+
+
+
+$first=TRUE;
+
+while($line = fgetcsv($csvfh ) ){
+
+    // skip first line, it's a header
+    if($first== TRUE) {
+	$first=FALSE;
+	continue;
+    }
+
+    $label = $line[0];   // human readable name
+    $mssid= $line[1];    // alma manuscript id
+    $bagName = $line[2]; // bagName from digilab
+
+
+    try {
+	
+	$response = $client->get("./$bagName/manifest-md5.txt");
+
+	$manifest = $response->getBody();
+	$manifestString = $manifest->getContents();
+	$json =makeRecipeJson( $bagName, $label);
+	$json = addPagesFromString($json, $manifestString, $bagName);
+	$file = fopen( $bagName . ".json", "w");
+	fwrite($file, $json);
+
+    } catch (ClientException $e) {
+	$badcode = $e->getResponse()->getStatusCode();
+	$baduri = $e->getRequest()->getUri();
+	print "Status: $badcode \n";
+	print "Resource: $baduri \n\n";
+    }
+}
