@@ -86,7 +86,7 @@ function addPagesFromString($json, $manifest, $bagName) {
 	    // currently lying about what hashes we're using
 	    // $json['recipe']['pages'][$index]['md5'] = trim($fileInfoArr[0]);
 	    $json['recipe']['pages'][$index]['sha1'] = trim($fileInfoArr[0]);
-	    $json['recipe']['pages'][$index]['uuid'] = Uuid::uuid5($repoUuid, $bagName."/".$fileName)->toString();
+	    $json['recipe']['pages'][$index]['uuid'] = Uuid::uuid5($repoUuid, $bagName."/data/".$fileName)->toString();
 	    $json['recipe']['pages'][$index]['exif'] = $fileName.".exif.txt";
 	    
 	    $index++;
