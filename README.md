@@ -7,4 +7,13 @@ Requires:
 * [ramsey/uuid](https://github.com/ramsey/uuid)
 * [GuzzleHttp](http://guzzle.readthedocs.org/)
 
-Use composer to get them. 
+Use composer to get them. (`composer install`)
+
+
+To get recipe files and meatadata for import in to the repository, do
+
+```bash
+
+./write_recipes.php import-list.csv  ./output/
+
+```
