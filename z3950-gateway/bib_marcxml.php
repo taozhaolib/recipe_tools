@@ -3,8 +3,9 @@
 * Returns a MarcXML record when queried with an bibliographic identifier. 
 */
 
-// Z39.50 address, eg. host:port/dbname
-$host='';
+
+require 'hostconfig.php';
+
 
 if (isset($_REQUEST['bib_id'])) {
     // Simple sanitizing of input
