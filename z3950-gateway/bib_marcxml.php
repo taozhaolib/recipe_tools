@@ -36,7 +36,10 @@ if (isset($_REQUEST['bib_id'])) {
                 // Successul record retrieval
                 http_response_code(200);
                 $doc = new DOMDocument();
-                $doc->loadXML($rec);
+               
+		$rec_clean = mb_convert_encoding($rec, 'UTF-8', 'UTF-8');
+                
+                $doc->loadXML($rec_clean);
                 $doc->formatOutput = true;
                 $xml_string = $doc->saveXML();
                 break;
@@ -53,14 +56,14 @@ if (isset($_REQUEST['bib_id'])) {
        } else {
             // Z39.50 errors
             http_response_code(500);
+            // Give the backend server a minute
+            sleep(5);
             $errordoc = new DOMDocument();
             $title = $errordoc->createElement('title');
             $title = $errordoc->appendChild($title);
             $text = $errordoc->createTextNode($error);
             $text = $title->appendChild($text);
-            $xml_string = $errordoc->saveXML();
-            // Give the backend server a few seconds
-            sleep(5);
+	    $xml_string = $errordoc->saveXML();
        }
     }
     // print whatever we've got
