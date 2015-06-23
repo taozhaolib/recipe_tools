@@ -40,6 +40,7 @@ function makeRecipeJson(  $bagName, $itemLabel)
 	$json['recipe'] = Array();
 	$json['recipe']['import'] = 'book';
 	$json['recipe']['update'] = 'false';
+	// This is the book uuid and will be used in the book uri
 	$json['recipe']['uuid'] = Uuid::uuid5($repoUuid, $bagName)->toString();
 	$json['recipe']['label'] = $itemLabel;
 	  
@@ -77,9 +78,11 @@ function addPagesFromString($json, $manifest, $bagName) {
 
 	if($fileInfo != "" && strpos($fileInfo, ".tif") > 0){
 	    
-	    $fileInfoArr = explode(" ", $fileInfo);
-	    $length = count($fileInfoArr);
-	    $fileName = trim(explode("/", trim($fileInfoArr[$length-1]))[1]);
+	    //	    $fileInfoArr = explode(" ", $fileInfo);
+	    //	    $length = count($fileInfoArr);
+	    //	    $fileName = trim(explode("/", trim($fileInfoArr[$length-1]))[1]);
+	    filename = basename($fileInfo);
+
 	    
 	    $json['recipe']['pages'][$index]['label'] = substr($fileName, 0, -4);
 	    $json['recipe']['pages'][$index]['file'] = $fileName;
@@ -138,22 +141,25 @@ while($line = fgetcsv($csvfh ) ){
     }
 
 
+    $mssid="";
+    $label="";
+    $bagName="";
     
     $csv_err="";
-    if(""!=$line[0]) {
-	$label = $line[0];// human readable name
+    if(""!=$line[3]) {
+	$label = $line[3];// human readable name
     }  else {
 	$csv_err .= ", missing label";
     }
 
-    if(""!=$line[1]) {
-	$mssid = $line[1]; // alma manuscript id
+    if(""!=$line[5]) {
+	$mssid = $line[5]; // alma manuscript id
     }    
     else {
 	$csv_err .= ", missing mssid ";
     }
-    if(""!=$line[2]) {
-	$bagName = $line[2]; // bagName from digilab
+    if(""!=$line[6]) {
+	$bagName = $line[6]; // bagName from digilab
     } 
     else {
 	$csv_err .=  ", missing bag name" ;
