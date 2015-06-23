@@ -81,7 +81,7 @@ function addPagesFromString($json, $manifest, $bagName) {
 	    //	    $fileInfoArr = explode(" ", $fileInfo);
 	    //	    $length = count($fileInfoArr);
 	    //	    $fileName = trim(explode("/", trim($fileInfoArr[$length-1]))[1]);
-	    filename = basename($fileInfo);
+	    $fileName = basename($fileInfo);
 
 	    
 	    $json['recipe']['pages'][$index]['label'] = substr($fileName, 0, -4);
