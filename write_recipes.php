@@ -78,17 +78,18 @@ function addPagesFromString($json, $manifest, $bagName) {
 
 	if($fileInfo != "" && strpos($fileInfo, ".tif") > 0){
 	    
-	    //	    $fileInfoArr = explode(" ", $fileInfo);
-	    //	    $length = count($fileInfoArr);
-	    //	    $fileName = trim(explode("/", trim($fileInfoArr[$length-1]))[1]);
-	    $fileName = basename($fileInfo);
+	    $fileInfoArr = explode(" ", $fileInfo);
+	    $length = count($fileInfoArr);
+	    $fileName = basename(trim($fileInfoArr[$length-1])) ;
+
+	    $fileHash = trim($fileInfoArr[0]);
 
 	    
 	    $json['recipe']['pages'][$index]['label'] = substr($fileName, 0, -4);
 	    $json['recipe']['pages'][$index]['file'] = $fileName;
 	    // currently lying about what hashes we're using
-	    // $json['recipe']['pages'][$index]['md5'] = trim($fileInfoArr[0]);
-	    $json['recipe']['pages'][$index]['sha1'] = trim($fileInfoArr[0]);
+	    // $json['recipe']['pages'][$index]['md5'] = $fileHash;
+	    $json['recipe']['pages'][$index]['sha1'] = $fileHash;
 	    $json['recipe']['pages'][$index]['uuid'] = Uuid::uuid5($repoUuid, $bagName."/data/".$fileName)->toString();
 	    $json['recipe']['pages'][$index]['exif'] = $fileName.".exif.txt";
 	    
