@@ -25,9 +25,8 @@ $repoSha =sha1($repoUuid);
 assert(strcmp("eb0ecf41-a457-5220-893a-08b7604b7110",$repoUuid)==0);
 assert(strcmp("1639fb25f09f85a3b035bd7a0a62b2a9c7e00c18",$repoSha)==0);
 
-
-
-    
+// Adds basic top level info to a josn representation of a book 
+//
 function makeRecipeJson(  $bagName, $itemLabel)
 {
 
@@ -63,7 +62,6 @@ function pagecmp($a,$b){
 }
 
 
-
 // given a json item record and a sting representation of a manifest
 // iterates through the manifest and adds page records 
 function addPagesFromString($json, $manifest, $bagName) {
@@ -75,16 +73,19 @@ function addPagesFromString($json, $manifest, $bagName) {
     $index=0;
     foreach($lines as $fileInfo) {
 
-
 	if($fileInfo != "" && strpos($fileInfo, ".tif") > 0){
 	    
 	    $fileInfoArr = explode(" ", $fileInfo);
 	    $length = count($fileInfoArr);
-	    $fileName = basename(trim($fileInfoArr[$length-1])) ;
 
+	    // don't add filenames that aren't at the top level
+	    $fileEntry = trim($fileInfoArr[$length-1]);
+	    $fileName = basename($fileEntry);
+	    if (0 != strcmp( $fileEntry, "data/".$fileName)) {
+		continue;
+	    }
 	    $fileHash = trim($fileInfoArr[0]);
 
-	    
 	    $json['recipe']['pages'][$index]['label'] = substr($fileName, 0, -4);
 	    $json['recipe']['pages'][$index]['file'] = $fileName;
 	    // currently lying about what hashes we're using
@@ -98,10 +99,19 @@ function addPagesFromString($json, $manifest, $bagName) {
 	}
     }
 
+
+    // files in manifest aren't sorted, so we need to sort them. 
     $temp_json=array_values($json['recipe']['pages']);
     usort($temp_json, "pagecmp");
-    $json['recipe']['pages'] = $temp_json; 
+    
+    // update labels to reflect image sequence order. 
+    for($pcnt=0;$pcnt < count($temp_json); $pcnt++ ) {
+	$temp_json[$pcnt]['label']="Image " .($pcnt+1) ;
+    }
 
+    //TODO: This is bad, needs to be rewriten so that function returns
+    //value OR function modifies structure, not both.
+    $json['recipe']['pages'] = $temp_json; 
     return json_encode($json, JSON_PRETTY_PRINT);
 }
 
@@ -125,10 +135,10 @@ if(! is_dir($outpath)) {
 
 
 
-// Set up Guzzle client to make requests for marcxml 
+// Set up Guzzle client to make requests for bag manifest
 $bagClient = new Client(['base_uri' => 'https://bagit.lib.ou.edu/UL-BAGIT/',
 		      'auth' => $FA_account]);
-
+// Likewise for marcxml
 $marcClient = new Client(['base_uri' => 'http://52.0.88.11']); 
 
 
@@ -179,7 +189,7 @@ while($line = fgetcsv($csvfh ) ){
 	$manifest = $response->getBody();
 	$manifestString = $manifest->getContents();
 
-	$json =makeRecipeJson( $bagName, $label);
+	$json = makeRecipeJson( $bagName, $label);
 	$json = addPagesFromString($json, $manifestString, $bagName);
 	$file = fopen( $outpath."/".$bagName . ".json", "w");
 
