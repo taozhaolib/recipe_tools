@@ -100,7 +100,7 @@ function addPagesFromString($json, $manifest, $bagName) {
     }
 
 
-    // files in manifest aren't sorted, so we need to sort them. 
+    // files in manifest aren't sorted, so we need to sort them.
     $temp_json=array_values($json['recipe']['pages']);
     usort($temp_json, "pagecmp");
     
@@ -109,8 +109,6 @@ function addPagesFromString($json, $manifest, $bagName) {
 	$temp_json[$pcnt]['label']="Image " .($pcnt+1) ;
     }
 
-    //TODO: This is bad, needs to be rewriten so that function returns
-    //value OR function modifies structure, not both.
     $json['recipe']['pages'] = $temp_json; 
     return json_encode($json, JSON_PRETTY_PRINT);
 }
