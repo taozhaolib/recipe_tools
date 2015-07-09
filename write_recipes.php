@@ -18,6 +18,10 @@ use GuzzleHttp\Exception\ClientException;
 
 
 
+$bagSrc='https://bagit.lib.ou.edu/UL-BAGIT/';
+//$bagSrc='/Users/lmc/Projects/recipe_tools/local_bags/';
+
+
 // these should be constant
 // generating them purely for documentation
 $repoUuid = Uuid::uuid5(Uuid::NAMESPACE_DNS, 'repository.ou.edu');
@@ -132,10 +136,17 @@ if(! is_dir($outpath)) {
 }
 
 
+// If we're using remote bags, set up Guzzle client to make requests for bag manifest
+$bagClient= NULL;
+if (substr( $bagSrc, 0, 8 ) === "https://") {
+    $bagClient = new Client(['base_uri' => $bagSrc,
+			     'auth' => $FA_account]);
+}
 
-// Set up Guzzle client to make requests for bag manifest
-$bagClient = new Client(['base_uri' => 'https://bagit.lib.ou.edu/UL-BAGIT/',
-		      'auth' => $FA_account]);
+
+
+
+
 // Likewise for marcxml
 $marcClient = new Client(['base_uri' => 'http://52.0.88.11']); 
 
@@ -182,10 +193,20 @@ while($line = fgetcsv($csvfh ) ){
 
 
     try {
-	$response = $bagClient->get("./$bagName/manifest-md5.txt");
 
-	$manifest = $response->getBody();
-	$manifestString = $manifest->getContents();
+	// Get the list of files to include from the bag manifest.  If
+	// we're set up to work with remote bags, do that, otherwise
+	// open local files.
+
+	$manifestString="";
+	if (! NULL === $bagClient) {
+	    $response = $bagClient->get("./$bagName/manifest-md5.txt");
+	    $manifest = $response->getBody();
+	    $manifestString = $manifest->getContents();
+	} else {
+	    $manifestString = file_get_contents( "$bagSrc/$bagName/manifest-md5.txt");
+	}
+	
 
 	$json = makeRecipeJson( $bagName, $label);
 	$json = addPagesFromString($json, $manifestString, $bagName);
