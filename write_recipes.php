@@ -20,7 +20,7 @@ use GuzzleHttp\Exception\ClientException;
 
 //$bagSrc='https://bagit.lib.ou.edu/UL-BAGIT/';
 //$bagSrc='/mnt/holding';
-$bagSrc='/mnt/YADMN';
+//$bagSrc='/mnt/YADMN';
 
 
 // these should be constant
@@ -128,6 +128,11 @@ if(! $outpath =@ $argv[2] ) {
     exit("No output path specified.\n");
 }
 
+
+if(! $bagSrc =@ $argv[3] ) {
+    exit("No source folder for bags specified.\n");
+}
+
 if(! $csvfh = @fopen( $itemfile, "r" ) ) {
     exit("Couldn't open file: $php_errormsg\n");
 }
@@ -136,6 +141,10 @@ if(! is_dir($outpath)) {
     exit("output path isn't a directory\n");
 }
 
+
+if(! is_dir($bagSrc)) {
+    exit("bag src folder isn't a directory\n");
+}
 
 // If we're using remote bags, set up Guzzle client to make requests for bag manifest
 $bagClient= NULL;
