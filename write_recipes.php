@@ -17,12 +17,6 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ClientException;
 
 
-
-//$bagSrc='https://bagit.lib.ou.edu/UL-BAGIT/';
-//$bagSrc='/mnt/holding';
-//$bagSrc='/mnt/YADMN';
-
-
 // these should be constant
 // generating them purely for documentation
 $repoUuid = Uuid::uuid5(Uuid::NAMESPACE_DNS, 'repository.ou.edu');
