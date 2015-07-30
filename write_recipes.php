@@ -18,8 +18,9 @@ use GuzzleHttp\Exception\ClientException;
 
 
 
-$bagSrc='https://bagit.lib.ou.edu/UL-BAGIT/';
-//$bagSrc='/Users/lmc/Projects/recipe_tools/local_bags/';
+//$bagSrc='https://bagit.lib.ou.edu/UL-BAGIT/';
+//$bagSrc='/mnt/holding';
+$bagSrc='/mnt/YADMN';
 
 
 // these should be constant
@@ -166,20 +167,20 @@ while($line = fgetcsv($csvfh ) ){
     $bagName="";
     
     $csv_err="";
-    if(""!=$line[3]) {
-	$label = $line[3];// human readable name
+    if(""!=$line[9]) {
+	$label = $line[9];// human readable name
     }  else {
 	$csv_err .= ", missing label";
     }
 
-    if(""!=$line[5]) {
-	$mssid = $line[5]; // alma manuscript id
+    if(""!=$line[1]) {
+	$mssid = $line[1]; // alma manuscript id
     }    
     else {
 	$csv_err .= ", missing mssid ";
     }
-    if(""!=$line[6]) {
-	$bagName = $line[6]; // bagName from digilab
+    if(""!=$line[3]) {
+	$bagName = $line[3]; // bagName from digilab
     } 
     else {
 	$csv_err .=  ", missing bag name" ;
@@ -193,6 +194,9 @@ while($line = fgetcsv($csvfh ) ){
 
 
     try {
+
+    
+        print "Processing $bagName\n";
 
 	// Get the list of files to include from the bag manifest.  If
 	// we're set up to work with remote bags, do that, otherwise
@@ -215,17 +219,6 @@ while($line = fgetcsv($csvfh ) ){
 	fwrite( $file, $json);
 	fclose( $file );
 
-    } catch (ClientException $e) {
-	$badcode = $e->getResponse()->getStatusCode();
-	$baduri = $e->getRequest()->getUri();
-
-        print "ERROR getting MANIFEST for $bagName. ";
-	print "Status: $badcode ";
-	print "URI: $baduri \n";
-    }
-
-    try {
-
 	$response = $marcClient->get(".", ['query' => ['bib_id' => $mssid]]);
 
 	// save it to a file based on the bag name
@@ -239,9 +232,17 @@ while($line = fgetcsv($csvfh ) ){
 	$badcode = $e->getResponse()->getStatusCode();
 	$baduri = $e->getRequest()->getUri();
 
-        print "ERROR getting MARC for $bagName.";
+        print "ERROR getting data for $bagName \n";
 	print "Status: $badcode ";
 	print "URI: $baduri \n";
+
+
+    } catch (RequestException $e) {
+
+        print "ERROR with network connection for $bagName \n";
+	print $e->getRequest()->getUri();
+	print "\n";
+  
     }
 
     
