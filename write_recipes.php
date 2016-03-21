@@ -72,7 +72,7 @@ function addPagesFromString($json, $manifest, $bagName) {
     $index=0;
     foreach($lines as $fileInfo) {
 
-	if($fileInfo != "" && strpos($fileInfo, ".tif") > 0){
+	if($fileInfo != "" && (strpos($fileInfo, ".tif") > 0 || strpos($fileInfo, ".tiff") > 0 || strpos($fileInfo, ".TIF") > 0) ){
 	    
 	    $fileInfoArr = explode(" ", $fileInfo);
 	    $length = count($fileInfoArr);
