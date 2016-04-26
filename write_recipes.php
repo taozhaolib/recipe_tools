@@ -26,13 +26,12 @@ assert(strcmp("1639fb25f09f85a3b035bd7a0a62b2a9c7e00c18",$repoSha)==0);
 
 // Adds basic top level info to a josn representation of a book 
 //
-function makeRecipeJson(  $bagName, $itemLabel)
+function makeRecipeJson($bagName, $itemLabel, $outpath)
 {
 
     global $repoUuid;
     global $repoSha;
-
-    
+   
     try{
 	$json = Array();
 	$json['recipe'] = Array();
@@ -43,7 +42,7 @@ function makeRecipeJson(  $bagName, $itemLabel)
 	$json['recipe']['label'] = $itemLabel;
 	  
 	$json['recipe']['metadata'] = Array();
-	$json['recipe']['metadata']['marcxml'] = $bagName.'.xml';
+	$json['recipe']['metadata']['marcxml'] = $outpath.$bagName.'.xml';
 	$json['recipe']['pages'] = Array();
     }
     catch (UnsatisfiedDependencyException $e) {
@@ -63,17 +62,23 @@ function pagecmp($a,$b){
 
 // given a json item record and a sting representation of a manifest
 // iterates through the manifest and adds page records 
-function addPagesFromString($json, $manifest, $bagName) {
+function addPagesFromString($json, $manifest, $bagName, $bagSrc = "") {
     global $repoUuid;
     
+    if(!empty($bagSrc)){
+	$pathPrefix = $bagSrc."/".$bagName."/data/";
+    }
+    else{
+	$pathPrefix = "";
+    }
+
     $lines = explode(PHP_EOL, $manifest);
 
     // build json array
     $index=0;
     foreach($lines as $fileInfo) {
 
-	if($fileInfo != "" && (strpos($fileInfo, ".tif") > 0 || strpos($fileInfo, ".tiff") > 0 || strpos($fileInfo, ".TIF") > 0) ){
-	    
+	if($fileInfo != "" && (strpos($fileInfo, ".tif") > 0 || strpos($fileInfo, ".tiff") > 0 || strpos($fileInfo, ".TIF") > 0) ){ 
 	    $fileInfoArr = explode(" ", $fileInfo);
 	    $length = count($fileInfoArr);
 
@@ -86,11 +91,11 @@ function addPagesFromString($json, $manifest, $bagName) {
 	    $fileHash = trim($fileInfoArr[0]);
 
 	    $json['recipe']['pages'][$index]['label'] = substr($fileName, 0, -4);
-	    $json['recipe']['pages'][$index]['file'] = $fileName;
+	    $json['recipe']['pages'][$index]['file'] = $pathPrefix.$fileName;
 	    // currently lying about what hashes we're using
-	    // $json['recipe']['pages'][$index]['md5'] = $fileHash;
-	    $json['recipe']['pages'][$index]['sha1'] = $fileHash;
+	    $json['recipe']['pages'][$index]['md5'] = $fileHash;
 	    $json['recipe']['pages'][$index]['uuid'] = Uuid::uuid5($repoUuid, $bagName."/data/".$fileName)->toString();
+	    // Did not change the path for this file as it is not used so far
 	    $json['recipe']['pages'][$index]['exif'] = $fileName.".exif.txt";
 	    
 	    $index++;
@@ -108,8 +113,8 @@ function addPagesFromString($json, $manifest, $bagName) {
 	$temp_json[$pcnt]['label']="Image " .($pcnt+1) ;
     }
 
-    $json['recipe']['pages'] = $temp_json; 
-    return json_encode($json, JSON_PRETTY_PRINT);
+    $json['recipe']['pages'] = $temp_json;
+    return json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 }
 
 
@@ -135,28 +140,21 @@ if(! is_dir($outpath)) {
     exit("output path isn't a directory\n");
 }
 
-
-if(! is_dir($bagSrc)) {
-    exit("bag src folder isn't a directory\n");
-}
-
 // If we're using remote bags, set up Guzzle client to make requests for bag manifest
 $bagClient= NULL;
-if (substr( $bagSrc, 0, 8 ) === "https://") {
+if (substr( $bagSrc, 0, 7 ) === "http://" || (substr( $bagSrc, 0, 8 ) === "https://")) {
     $bagClient = new Client(['base_uri' => $bagSrc,
 			     'auth' => $FA_account]);
 }
-
-
-
-
+elseif(! is_dir($bagSrc)) {
+    exit("bag src folder isn't a directory\n");
+}
 
 // Likewise for marcxml
 $marcClient = new Client(['base_uri' => 'http://52.0.88.11']); 
 
-
 $count=0;
-while($line = fgetcsv($csvfh ) ){
+while($line = fgetcsv($csvfh) ){
     $count++;
     
     // skip first line, it's a header
@@ -215,8 +213,8 @@ while($line = fgetcsv($csvfh ) ){
 	}
 	
 
-	$json = makeRecipeJson( $bagName, $label);
-	$json = addPagesFromString($json, $manifestString, $bagName);
+	$json = makeRecipeJson($bagName, $label, $outpath);
+	$json = addPagesFromString($json, $manifestString, $bagName, $bagSrc);
 	$file = fopen( $outpath."/".$bagName . ".json", "w");
 
 	fwrite( $file, $json);
