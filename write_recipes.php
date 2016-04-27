@@ -26,7 +26,7 @@ assert(strcmp("1639fb25f09f85a3b035bd7a0a62b2a9c7e00c18",$repoSha)==0);
 
 // Adds basic top level info to a josn representation of a book 
 //
-function makeRecipeJson($bagName, $itemLabel, $outpath)
+function makeRecipeJson($bagName, $itemLabel)
 {
 
     global $repoUuid;
@@ -42,7 +42,7 @@ function makeRecipeJson($bagName, $itemLabel, $outpath)
 	$json['recipe']['label'] = $itemLabel;
 	  
 	$json['recipe']['metadata'] = Array();
-	$json['recipe']['metadata']['marcxml'] = $outpath.$bagName.'.xml';
+	$json['recipe']['metadata']['marcxml'] = $bagName.'.xml';
 	$json['recipe']['pages'] = Array();
     }
     catch (UnsatisfiedDependencyException $e) {
@@ -213,7 +213,7 @@ while($line = fgetcsv($csvfh) ){
 	}
 	
 
-	$json = makeRecipeJson($bagName, $label, $outpath);
+	$json = makeRecipeJson($bagName, $label);
 	$json = addPagesFromString($json, $manifestString, $bagName, $bagSrc);
 	$file = fopen( $outpath."/".$bagName . ".json", "w");
 
